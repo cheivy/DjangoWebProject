@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>历史记录表</title>
+</head>
+<body>
+<table border="1">
+    <thead>
+    <tr>
+        <th>input</th>
+        <th>output</th>
+    </tr>
+    </thead>
+    {% for data in datas %}
+    <tr>
+        <td>{{ data.input }}</td>
+        <td>{{ data.output }}</td>
+    </tr>
+    {% endfor %}
+</table>
+<form action="/convert1/delete" method="post">
+    {% csrf_token %}
+    <input type="submit" value="清库">
+</form>
+</body>
+</html>

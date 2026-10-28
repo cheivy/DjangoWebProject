@@ -1,0 +1,24 @@
+# 虚拟环境，所有人的venv都忽略！
+venv/
+env/
+.venv/
+.env/
+
+# Django缓存、数据库、日志
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+db.sqlite3
+media/
+static/
+logs/
+*.log
+
+# PyCharm配置文件
+.idea/
+*.iml
+
+# 系统文件
+.DS_Store
+Thumbs.db
