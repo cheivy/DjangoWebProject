@@ -21,9 +21,11 @@ from django.shortcuts import render
 
 def index(request):
     return render(request, 'index.html')
+def home(request):
+    return render(request, 'home.html')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', index, name='index'),
+    path('', home, name='home'),
     path('convert1/', include('convert1.urls')),
 ]
