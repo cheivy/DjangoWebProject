@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>查询历史中心 · 汉字字形信息管理系统</title>
+    <link rel="icon" href="data:,">
+    <style>
+        :root {
+            --ink: #1b2430;
+            --ink-soft: #46505f;
+            --muted: #7d8798;
+            --paper: #f6f2e9;
+            --paper-2: #fffdf8;
+            --line: #e5ddcc;
+            --seal: #b23a2e;
+            --seal-2: #d4783f;
+            --jade: #3f6f63;
+            --serif: "Songti SC", "STSong", "SimSun", "Noto Serif SC", serif;
+            --kai: "STKaiti", "KaiTi", "楷体", serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: "PingFang SC", "Microsoft Yahei", system-ui, -apple-system, sans-serif;
+            color: var(--ink);
+            line-height: 1.75;
+            min-height: 100vh;
+            background:
+                radial-gradient(900px 420px at 8% -10%, #fff8ea 0%, rgba(255, 248, 234, 0) 62%),
+                radial-gradient(760px 420px at 94% 4%, #f1eade 0%, rgba(241, 234, 222, 0) 58%),
+                var(--paper);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { color: inherit; }
+
+        /* ============ 顶部导航 ============ */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(246, 242, 233, .85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--line);
+        }
+        .navbar-inner {
+            max-width: 1060px;
+            margin: 0 auto;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+        .seal {
+            width: 36px;
+            height: 36px;
+            flex: none;
+            border-radius: 9px;
+            display: grid;
+            place-items: center;
+            font-family: var(--serif);
+            font-size: 19px;
+            font-weight: 700;
+            color: #fff7ee;
+            background: linear-gradient(135deg, var(--seal), #c9503f);
+            box-shadow: 0 4px 12px rgba(178, 58, 46, .28);
+        }
+        .brand-text {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: .5px;
+            line-height: 1.3;
+        }
+        .brand-text em {
+            display: block;
+            font-style: normal;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            color: var(--muted);
+        }
+        .back-link {
+            font-size: 14px;
+            color: var(--ink-soft);
+            text-decoration: none;
+            padding: 7px 16px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: rgba(255, 253, 248, .75);
+            transition: border-color .2s, color .2s, box-shadow .2s, transform .2s;
+        }
+        .back-link:hover {
+            color: var(--seal);
+            border-color: #d3c7ae;
+            box-shadow: 0 8px 18px rgba(27, 36, 48, .08);
+            transform: translateY(-1px);
+        }
+
+        /* ============ 主体 ============ */
+        .shell {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 34px 24px 72px;
+        }
+
+        .crumb {
+            font-size: 13px;
+            color: var(--muted);
+            letter-spacing: .5px;
+            margin-bottom: 12px;
+        }
+        .crumb a { text-decoration: none; transition: color .2s; }
+        .crumb a:hover { color: var(--seal); }
+        .crumb span { margin: 0 7px; color: #c9bfa9; }
+
+        .page-head { margin-bottom: 26px; }
+        .page-head h1 {
+            font-family: var(--serif);
+            font-size: 30px;
+            letter-spacing: 2px;
+            font-weight: 800;
+        }
+        .page-head h1::after {
+            content: "";
+            display: block;
+            width: 40px;
+            height: 3px;
+            margin-top: 14px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--seal), var(--seal-2));
+        }
+        .page-head p {
+            margin-top: 14px;
+            max-width: 700px;
+            font-size: 14.5px;
+            color: var(--ink-soft);
+        }
+
+        /* ============ 说明条 ============ */
+        .intro-note {
+            display: flex;
+            gap: 14px;
+            padding: 18px 22px;
+            margin-bottom: 26px;
+            background: rgba(255, 253, 248, .75);
+            border: 1px solid var(--line);
+            border-left: 3px solid var(--jade);
+            border-radius: 4px 14px 14px 4px;
+        }
+        .intro-note .note-mark {
+            flex: none;
+            font-family: var(--serif);
+            font-size: 20px;
+            line-height: 1.4;
+            color: var(--jade);
+        }
+        .intro-note p {
+            font-size: 14px;
+            color: var(--ink-soft);
+            line-height: 1.85;
+        }
+        .intro-note strong { color: var(--ink); }
+
+        /* ============ 两个入口卡片 ============ */
+        .entry-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 22px;
+        }
+
+        .entry {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            padding: 30px 28px 26px;
+            background: var(--paper-2);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            text-decoration: none;
+            color: inherit;
+            box-shadow: 0 10px 28px rgba(27, 36, 48, .06);
+            transition: transform .26s, box-shadow .28s, border-color .26s;
+            overflow: hidden;
+        }
+        .entry::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--seal), var(--seal-2));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform .32s;
+        }
+        .entry:hover,
+        .entry:focus-visible {
+            transform: translateY(-6px);
+            border-color: #dccfb6;
+            box-shadow: 0 20px 40px rgba(27, 36, 48, .11);
+            outline: none;
+        }
+        .entry:hover::before,
+        .entry:focus-visible::before { transform: scaleX(1); }
+
+        .entry-icon {
+            width: 52px;
+            height: 52px;
+            display: grid;
+            place-items: center;
+            font-family: var(--kai);
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--seal);
+            background: linear-gradient(180deg, #fdf8ee, #f7efe0);
+            border: 1px solid #ecdfc7;
+            border-radius: 13px;
+            margin-bottom: 18px;
+        }
+
+        .entry h3 {
+            font-family: var(--serif);
+            font-size: 21px;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        .entry p {
+            font-size: 14px;
+            color: var(--ink-soft);
+            line-height: 1.8;
+        }
+
+        .entry-points {
+            margin: 16px 0 0;
+            padding: 0;
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+        .entry-points li {
+            position: relative;
+            padding-left: 18px;
+            font-size: 13px;
+            color: var(--ink-soft);
+            line-height: 1.7;
+        }
+        .entry-points li::before {
+            content: "";
+            position: absolute;
+            left: 3px;
+            top: .68em;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--gold, #d4a373);
+        }
+
+        .entry-more {
+            margin-top: auto;
+            padding-top: 22px;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--seal);
+            letter-spacing: 1px;
+        }
+        .entry-more i {
+            font-style: normal;
+            display: inline-block;
+            transition: transform .25s;
+        }
+        .entry:hover .entry-more i { transform: translateX(5px); }
+
+        /* ============ 通用区块 ============ */
+        .section { margin-top: 44px; }
+        .section-head {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .section-head h2 {
+            font-family: var(--serif);
+            font-size: 20px;
+            letter-spacing: 2px;
+            font-weight: 800;
+        }
+        .section-head h2::before {
+            content: "";
+            display: inline-block;
+            width: 3px;
+            height: 15px;
+            margin-right: 10px;
+            border-radius: 2px;
+            background: linear-gradient(180deg, var(--seal), var(--seal-2));
+            vertical-align: -2px;
+        }
+        .section-head span {
+            font-size: 12.5px;
+            color: var(--muted);
+            letter-spacing: .5px;
+        }
+
+        /* 区别对比表 */
+        .compare-card {
+            background: var(--paper-2);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            box-shadow: 0 8px 26px rgba(27, 36, 48, .05);
+            overflow: hidden;
+        }
+        .compare-row {
+            display: grid;
+            grid-template-columns: 130px 1fr 1fr;
+            border-bottom: 1px solid #f0eadd;
+        }
+        .compare-row:last-child { border-bottom: none; }
+        .compare-row > div {
+            padding: 14px 18px;
+            font-size: 14px;
+            color: var(--ink-soft);
+            line-height: 1.75;
+            word-break: break-word;
+        }
+        .compare-row > div:first-child {
+            font-size: 12.5px;
+            letter-spacing: 2px;
+            color: var(--muted);
+            background: #faf5ea;
+            border-right: 1px solid #f0eadd;
+        }
+        .compare-row > div:nth-child(2) { border-right: 1px solid #f0eadd; }
+        .compare-row.head > div {
+            background: #f4eee2;
+            font-weight: 600;
+            color: var(--ink);
+            font-size: 13.5px;
+            letter-spacing: 1px;
+        }
+        .compare-row.head > div:first-child { background: #f4eee2; }
+
+        /* 使用建议 */
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+        }
+        .tip-item {
+            padding: 20px 22px;
+            background: rgba(255, 253, 248, .7);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+        }
+        .tip-num {
+            display: block;
+            font-family: Georgia, serif;
+            font-size: 12.5px;
+            letter-spacing: 2px;
+            color: var(--seal);
+            margin-bottom: 8px;
+        }
+        .tip-item h4 {
+            font-size: 15.5px;
+            margin-bottom: 6px;
+            letter-spacing: .5px;
+        }
+        .tip-item p {
+            font-size: 13.5px;
+            color: var(--ink-soft);
+            line-height: 1.8;
+        }
+
+        /* 小知识 */
+        .fact-card {
+            padding: 24px 26px;
+            background: linear-gradient(135deg, #fdfcfb 0%, #f4f1ec 100%);
+            border: 1px solid #e8e2d8;
+            border-radius: 16px;
+            box-shadow: 0 2px 14px rgba(139, 115, 85, .07);
+        }
+        .fact-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .fact-list li {
+            display: flex;
+            gap: 12px;
+            font-size: 14px;
+            color: var(--ink-soft);
+            line-height: 1.8;
+        }
+        .fact-list li::before {
+            content: "·";
+            flex: none;
+            font-family: var(--serif);
+            font-size: 20px;
+            line-height: 1.2;
+            color: var(--seal);
+        }
+        .fact-list strong { color: var(--ink); }
+
+        /* ============ 响应式 ============ */
+        @media (max-width: 760px) {
+            .shell { padding: 26px 16px 56px; }
+            .page-head h1 { font-size: 24px; }
+            .entry { padding: 24px 22px 22px; }
+            .compare-row {
+                grid-template-columns: 1fr;
+                border-bottom: 1px solid var(--line);
+            }
+            .compare-row > div {
+                padding: 10px 16px;
+                border-right: none !important;
+            }
+            .compare-row > div:first-child {
+                padding-bottom: 4px;
+                background: transparent;
+                font-weight: 600;
+                color: var(--ink);
+            }
+            .compare-row.head { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ===== 顶部导航 ===== -->
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a class="brand" href="{% url 'home' %}">
+                <span class="seal">篆</span>
+                <span class="brand-text">
+                    汉字字形
+                    <em>信息管理系统</em>
+                </span>
+            </a>
+            <a class="back-link" href="{% url 'home' %}">← 返回系统首页</a>
+        </div>
+    </nav>
+
+    <main class="shell">
+        <!-- 面包屑 -->
+        <div class="crumb">
+            <a href="{% url 'home' %}">首页</a><span>/</span>查询历史中心
+        </div>
+
+        <!-- 页面标题 -->
+        <header class="page-head">
+            <h1>查询历史中心</h1>
+            <p>系统分别记录简繁双向转换与小篆字形查询的每一次操作。两类记录用途不同、字段也不同，请根据需要查看。</p>
+        </header>
+
+        <!-- 说明条 -->
+        <div class="intro-note">
+            <span class="note-mark">录</span>
+            <p>
+                历史记录由系统在每次查询成功后<strong>自动写入</strong>，无需手动保存。
+                记录按查询时间<strong>倒序排列</strong>，最新的一次排在最前，支持在各自页面内一键清空。
+                清空操作<strong>不可撤销</strong>，执行前请确认。
+            </p>
+        </div>
+
+        <!-- 两个入口 -->
+        <section class="entry-grid">
+            <!-- 简繁转换历史 -->
+            <a class="entry" href="{% url 'convert1:historyUI' %}">
+                <span class="entry-icon">简</span>
+                <h3>简繁转换历史</h3>
+                <p>记录每一次简体转繁体、繁体转简体的输入文本、转换结果与查询时间。</p>
+                <ul class="entry-points">
+                    <li>适合回溯“一简多繁”的转换结果，核对用字是否准确</li>
+                    <li>保留完整输入与输出，可直接对照原文与译文</li>
+                    <li>按时间倒序排列，便于追溯最近一次转换</li>
+                </ul>
+                <span class="entry-more">查看记录 <i>→</i></span>
+            </a>
+
+            <!-- 小篆查询历史 -->
+            <a class="entry" href="/convert1/xiaozhuanhistoryUI">
+                <span class="entry-icon">篆</span>
+                <h3>小篆查询历史</h3>
+                <p>记录每一次小篆字形查询的汉字、字形信息与查询时间，形成个人的字形浏览轨迹。</p>
+                <ul class="entry-points">
+                    <li>快速回看查询过的汉字，无需重新输入</li>
+                    <li>同时保留拼音、部首、笔画、Unicode 等字形档案</li>
+                    <li>适合对比不同汉字的小篆结构差异</li>
+                </ul>
+                <span class="entry-more">查看记录 <i>→</i></span>
+            </a>
+        </section>
+
+        <!-- 两类记录的区别 -->
+        <section class="section">
+            <div class="section-head">
+                <h2>两类记录的区别</h2>
+                <span>字段与用途对照</span>
+            </div>
+            <div class="compare-card">
+                <div class="compare-row head">
+                    <div>对比项</div>
+                    <div>简繁转换历史</div>
+                    <div>小篆查询历史</div>
+                </div>
+                <div class="compare-row">
+                    <div>记录对象</div>
+                    <div>一段文字的整体转换</div>
+                    <div>单个汉字的字形查询</div>
+                </div>
+                <div class="compare-row">
+                    <div>核心字段</div>
+                    <div>输入内容、输出结果、查询时间</div>
+                    <div>查询汉字、字形信息、查询时间</div>
+                </div>
+                <div class="compare-row">
+                    <div>典型用途</div>
+                    <div>核对简繁用字、检查一简多繁结果</div>
+                    <div>回看字形档案、对比篆形结构</div>
+                </div>
+                <div class="compare-row">
+                    <div>产生来源</div>
+                    <div>在「简繁双向转换」页完成一次转换</div>
+                    <div>在「小篆字形生成」页完成一次查询</div>
+                </div>
+                <div class="compare-row">
+                    <div>清空方式</div>
+                    <div>简繁历史页底部「清空全部历史」</div>
+                    <div>小篆历史页底部「清空小篆历史」</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 使用建议 -->
+        <section class="section">
+            <div class="section-head">
+                <h2>使用建议</h2>
+                <span>让记录更有用</span>
+            </div>
+            <div class="tips-grid">
+                <div class="tip-item">
+                    <span class="tip-num">01</span>
+                    <h4>按主题集中查询</h4>
+                    <p>一次课程演示或一组练习尽量连续完成，历史记录会按时间聚集，回溯时更容易定位。</p>
+                </div>
+                <div class="tip-item">
+                    <span class="tip-num">02</span>
+                    <h4>转换前先确认方向</h4>
+                    <p>简转繁与繁转简的结果不互为逆运算，尤其涉及“一简多繁”字时，建议在历史里对照原文核对。</p>
+                </div>
+                <div class="tip-item">
+                    <span class="tip-num">03</span>
+                    <h4>清空前先留档</h4>
+                    <p>历史记录清空后无法恢复。若某条转换结果或字形档案还要用，请先复制到文档中留存。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 小知识 -->
+        <section class="section">
+            <div class="section-head">
+                <h2>字形小知识</h2>
+                <span>理解记录背后的文字学背景</span>
+            </div>
+            <div class="fact-card">
+                <ul class="fact-list">
+                    <li><span><strong>简繁并非一一对应。</strong>一个简体字可能对应多个繁体字，如“发”可作“發”（出发）或“髮”（头发），转换时需结合语境判断，这正是简繁历史记录要保留完整输入输出的原因。</span></li>
+                    <li><span><strong>小篆是秦代统一后的标准字形。</strong>许慎《说文解字》以小篆为正体收字，按部首编排，共 540 部，是后世查阅小篆字形的重要依据。</span></li>
+                    <li><span><strong>小篆没有现代意义上的规范笔画数。</strong>它由圆转匀称的线条构成，连断处理因字形而异，因此字形档案中的“笔画”字段指的是对应现代汉字的笔画数，而非篆形线条数。</span></li>
+                    <li><span><strong>Unicode 编码的是字符，不是字体。</strong>同一个汉字的小篆写法通常共享同一个码位，篆形靠字体渲染呈现，所以查询记录里保存的是字符编码，而非篆形编码。</span></li>
+                </ul>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

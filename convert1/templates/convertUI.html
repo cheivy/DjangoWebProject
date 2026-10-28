@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简繁双向转换 · 汉字字形信息管理系统</title>
+    <link rel="icon" href="data:,">
+    <style>
+        :root {
+            --ink: #1b2430;
+            --ink-soft: #46505f;
+            --muted: #7d8798;
+            --paper: #f6f2e9;
+            --paper-2: #fffdf8;
+            --line: #e5ddcc;
+            --seal: #b23a2e;
+            --seal-2: #d4783f;
+            --jade: #3f6f63;
+            --serif: "Songti SC", "STSong", "SimSun", "Noto Serif SC", serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: "PingFang SC", "Microsoft Yahei", system-ui, -apple-system, sans-serif;
+            color: var(--ink);
+            line-height: 1.75;
+            min-height: 100vh;
+            background:
+                radial-gradient(900px 420px at 8% -10%, #fff8ea 0%, rgba(255, 248, 234, 0) 62%),
+                radial-gradient(760px 420px at 94% 4%, #f1eade 0%, rgba(241, 234, 222, 0) 58%),
+                var(--paper);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { color: inherit; }
+
+        /* ============ 顶部导航 ============ */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(246, 242, 233, .85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--line);
+        }
+        .navbar-inner {
+            max-width: 1040px;
+            margin: 0 auto;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+        .seal {
+            width: 36px;
+            height: 36px;
+            flex: none;
+            border-radius: 9px;
+            display: grid;
+            place-items: center;
+            font-family: var(--serif);
+            font-size: 19px;
+            font-weight: 700;
+            color: #fff7ee;
+            background: linear-gradient(135deg, var(--seal), #c9503f);
+            box-shadow: 0 4px 12px rgba(178, 58, 46, .28);
+        }
+        .brand-text {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: .5px;
+            line-height: 1.3;
+        }
+        .brand-text em {
+            display: block;
+            font-style: normal;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            color: var(--muted);
+        }
+        .back-link {
+            font-size: 14px;
+            color: var(--ink-soft);
+            text-decoration: none;
+            padding: 7px 16px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: rgba(255, 253, 248, .75);
+            transition: border-color .2s, color .2s, box-shadow .2s, transform .2s;
+        }
+        .back-link:hover {
+            color: var(--seal);
+            border-color: #d3c7ae;
+            box-shadow: 0 8px 18px rgba(27, 36, 48, .08);
+            transform: translateY(-1px);
+        }
+
+        /* ============ 主体 ============ */
+        .shell {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 34px 24px 72px;
+        }
+
+        .crumb {
+            font-size: 13px;
+            color: var(--muted);
+            letter-spacing: .5px;
+            margin-bottom: 12px;
+        }
+        .crumb a { text-decoration: none; transition: color .2s; }
+        .crumb a:hover { color: var(--seal); }
+        .crumb span { margin: 0 7px; color: #c9bfa9; }
+
+        .page-head { margin-bottom: 26px; }
+        .page-head h1 {
+            font-family: var(--serif);
+            font-size: 30px;
+            letter-spacing: 2px;
+            font-weight: 800;
+        }
+        .page-head h1::after {
+            content: "";
+            display: block;
+            width: 40px;
+            height: 3px;
+            margin-top: 14px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--seal), var(--seal-2));
+        }
+        .page-head p {
+            margin-top: 14px;
+            max-width: 660px;
+            font-size: 14.5px;
+            color: var(--ink-soft);
+        }
+                /* ============ 延伸阅读入口 ============ */
+        .history-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 16px 7px 7px;
+            font-size: 13.5px;
+            font-weight: 500;
+            letter-spacing: .5px;
+            color: var(--jade);
+            background: rgba(63, 111, 99, .07);
+            border: 1px solid rgba(63, 111, 99, .22);
+            border-radius: 999px;
+            text-decoration: none;
+            transition: background .22s, border-color .22s, transform .22s, box-shadow .22s;
+        }
+        .history-link:hover {
+            background: rgba(63, 111, 99, .14);
+            border-color: rgba(63, 111, 99, .5);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(63, 111, 99, .12);
+        }
+        .history-link .hl-icon {
+            width: 22px;
+            height: 22px;
+            flex: none;
+            display: grid;
+            place-items: center;
+            font-family: var(--serif);
+            font-size: 12px;
+            font-weight: 700;
+            color: #f6f2e9;
+            background: linear-gradient(135deg, var(--jade), #55897b);
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(63, 111, 99, .3);
+        }
+        .history-link .hl-arrow {
+            font-size: 14px;
+            transition: transform .22s;
+        }
+        .history-link:hover .hl-arrow {
+            transform: translateX(3px);
+        }
+        /* ============ 转换面板 ============ */
+        .panel {
+            background: var(--paper-2);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 12px 34px rgba(27, 36, 48, .07);
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        /* 分段切换控件 */
+        .segmented {
+            display: inline-flex;
+            gap: 4px;
+            padding: 4px;
+            background: #f1eade;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+        }
+        .seg {
+            position: relative;
+            display: block;
+            cursor: pointer;
+        }
+        .seg input {
+            position: absolute;
+            width: 0;
+            height: 0;
+            opacity: 0;
+        }
+        .seg span {
+            display: block;
+            padding: 7px 20px;
+            border-radius: 999px;
+            font-size: 14px;
+            letter-spacing: .5px;
+            color: var(--ink-soft);
+            transition: background .22s, color .22s, box-shadow .22s;
+        }
+        .seg input:checked + span {
+            background: var(--paper-2);
+            color: var(--seal);
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(27, 36, 48, .1);
+        }
+        .seg input:focus-visible + span {
+            outline: 2px solid var(--seal);
+            outline-offset: 2px;
+        }
+
+        .chips { display: flex; gap: 8px; }
+        .chip {
+            font: inherit;
+            font-size: 13px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: #fbf7ee;
+            color: var(--ink-soft);
+            cursor: pointer;
+            transition: border-color .2s, color .2s, background .2s;
+        }
+        .chip:hover {
+            color: var(--seal);
+            border-color: #d8cbb2;
+            background: #fdf9f1;
+        }
+
+        /* 编辑区 */
+        .editor-grid {
+            display: grid;
+            grid-template-columns: 1fr 40px 1fr;
+            gap: 12px;
+            align-items: stretch;
+        }
+        .editor {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .editor-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            letter-spacing: 1px;
+            color: var(--muted);
+        }
+
+        textarea {
+            flex: 1;
+            width: 100%;
+            min-height: 190px;
+            padding: 14px 16px;
+            font: inherit;
+            font-size: 16px;
+            line-height: 1.8;
+            color: var(--ink);
+            background: #fdfbf6;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            resize: vertical;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        textarea::placeholder { color: #b6ae9d; }
+        textarea:focus {
+            outline: none;
+            border-color: #d8b48e;
+            box-shadow: 0 0 0 3px rgba(212, 120, 63, .12);
+        }
+
+        .result {
+            flex: 1;
+            min-height: 190px;
+            padding: 14px 16px;
+            font-size: 16px;
+            line-height: 1.8;
+            color: var(--ink);
+            background: #fbf8f1;
+            border: 1px dashed #dcd2bd;
+            border-radius: 12px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow: auto;
+        }
+        .result:empty::before {
+            content: "转换结果将显示在这里";
+            color: #b6ae9d;
+            font-size: 14.5px;
+        }
+
+        .copy-btn {
+            font: inherit;
+            font-size: 12.5px;
+            padding: 4px 13px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: transparent;
+            color: var(--ink-soft);
+            cursor: pointer;
+            transition: color .2s, border-color .2s, opacity .2s;
+        }
+        .copy-btn:hover:not(:disabled) {
+            color: var(--seal);
+            border-color: #d8cbb2;
+        }
+        .copy-btn:disabled {
+            opacity: .45;
+            cursor: not-allowed;
+        }
+
+        .arrow {
+            display: grid;
+            place-items: center;
+            color: #c9bfa9;
+            font-size: 20px;
+            user-select: none;
+        }
+
+        /* 操作区 */
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            margin-top: 22px;
+        }
+        .btn {
+            font: inherit;
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            padding: 11px 28px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform .2s, box-shadow .25s, background .25s, border-color .2s, color .2s;
+        }
+        .btn:active { transform: translateY(1px); }
+        .btn-primary {
+            color: #fff8f2;
+            background: linear-gradient(135deg, var(--seal), #c9513f);
+            box-shadow: 0 8px 20px rgba(178, 58, 46, .24);
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 26px rgba(178, 58, 46, .3);
+        }
+        .btn-primary:disabled {
+            opacity: .65;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .btn-ghost {
+            color: var(--ink);
+            background: rgba(255, 253, 248, .9);
+            border-color: var(--line);
+        }
+        .btn-ghost:hover {
+            transform: translateY(-2px);
+            border-color: #d3c7ae;
+            color: var(--seal);
+            box-shadow: 0 10px 20px rgba(27, 36, 48, .08);
+        }
+
+        .hint-inline {
+            margin-left: auto;
+            font-size: 12.5px;
+            color: var(--muted);
+        }
+
+        .err {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 14px;
+            font-size: 14px;
+            color: var(--seal);
+        }
+        .err::before { content: "⚠"; }
+        .err:empty { display: none; }
+
+        /* ============ 响应式 ============ */
+        @media (max-width: 760px) {
+            .shell { padding: 26px 18px 56px; }
+            .panel { padding: 18px; }
+            .page-head h1 { font-size: 24px; }
+            .editor-grid { grid-template-columns: 1fr; }
+            .arrow { height: 22px; transform: rotate(90deg); }
+            .hint-inline { margin-left: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ===== 顶部导航 ===== -->
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a class="brand" href="{% url 'home' %}">
+                <span class="seal">篆</span>
+                <span class="brand-text">
+                    汉字字形
+                    <em>信息管理系统</em>
+                </span>
+            </a>
+            <a class="back-link" href="{% url 'home' %}">← 返回系统首页</a>
+        </div>
+    </nav>
+
+    <main class="shell">
+        <!-- 面包屑 -->
+        <div class="crumb">
+            <a href="{% url 'home' %}">首页</a><span>/</span>简繁双向转换
+        </div>
+
+        <!-- 页面标题 -->
+        <header class="page-head">
+            <h1>简繁双向转换</h1>
+            <p>简体与繁体一键互转，针对“一简多繁”的歧义字做适配处理，还原正确繁体写法；转换结果可直接复制使用。</p>
+            <div class="history-links">
+                <a class="history-link" href="{% url 'convert1:evolution' %}#fanti">
+                    <span class="hl-icon">繁</span>
+                    繁体字的历史
+                    <span class="hl-arrow">→</span>
+                </a>
+                <a class="history-link" href="{% url 'convert1:evolution' %}#jianti">
+                    <span class="hl-icon">简</span>
+                    简体字的历史
+                    <span class="hl-arrow">→</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- 转换面板 -->
+        <section class="panel">
+            <div class="toolbar">
+                <div class="segmented" role="radiogroup" aria-label="转换方向">
+                    <label class="seg">
+                        <input type="radio" name="mode" value="s2t" checked>
+                        <span>简体 → 繁体</span>
+                    </label>
+                    <label class="seg">
+                        <input type="radio" name="mode" value="t2s">
+                        <span>繁体 → 简体</span>
+                    </label>
+                </div>
+                <div class="chips">
+                    <button id="sampleBtn" class="chip" type="button">填入示例</button>
+                    <button id="clearBtn" class="chip" type="button">清空</button>
+                </div>
+            </div>
+
+            <div class="editor-grid">
+                <div class="editor">
+                    <div class="editor-head">
+                        <span>输入文本</span>
+                        <span id="counter">0 字</span>
+                    </div>
+                    <textarea id="inputText" placeholder="请输入要转换的简体汉字"></textarea>
+                </div>
+
+                <div class="arrow" aria-hidden="true">→</div>
+
+                <div class="editor">
+                    <div class="editor-head">
+                        <span>转换结果</span>
+                        <button id="copyBtn" class="copy-btn" type="button" disabled>复制</button>
+                    </div>
+                    <div id="outputText" class="result"></div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button id="convertBtn" class="btn btn-primary" type="button">开始转换</button>
+                <a class="btn btn-ghost" href="{% url 'convert1:historyUI' %}">查询历史</a>
+                <span class="hint-inline">支持 Ctrl / ⌘ + Enter 快捷转换</span>
+            </div>
+
+            <div id="errMsg" class="err" role="alert"></div>
+        </section>
+    </main>
+
+    <script>
+        (function () {
+            // 用 Django 反向解析出真正的 API 地址（对应 convert_text 视图）
+            const API = "{% url 'convert1:convert' %}";
+
+            const $input   = document.getElementById('inputText');
+            const $output  = document.getElementById('outputText');
+            const $err     = document.getElementById('errMsg');
+            const $btn     = document.getElementById('convertBtn');
+            const $counter = document.getElementById('counter');
+            const $copyBtn = document.getElementById('copyBtn');
+            const $clearBtn = document.getElementById('clearBtn');
+            const $sampleBtn = document.getElementById('sampleBtn');
+
+            // 仅允许纯汉字
+            const HAN = /^[\u4e00-\u9fa5]+$/;
+            const SAMPLE = '风云';
+
+            function setErr(msg) {
+                $err.textContent = msg || '';
+            }
+
+            function updateCounter() {
+                const n = $input.value.replace(/\s/g, '').length;
+                $counter.textContent = n + ' 字';
+            }
+
+            function setResult(text) {
+                $output.textContent = text || '';
+                $copyBtn.disabled = !text;
+            }
+
+            async function doConvert() {
+                setErr('');
+
+                const text = $input.value.trim();
+                if (!text) {
+                    setErr('请输入待转换的文本');
+                    $input.focus();
+                    return;
+                }
+                if (!HAN.test(text)) {
+                    setErr('当前仅支持纯汉字输入，请移除数字、字母、标点或空格');
+                    $input.focus();
+                    return;
+                }
+
+                const mode = document.querySelector('input[name="mode"]:checked').value;
+                const params = new URLSearchParams({ text: text, mode: mode });
+
+                $btn.disabled = true;
+                $btn.textContent = '转换中…';
+                try {
+                    const resp = await fetch(`${API}?${params}`);
+                    const data = await resp.json();
+                    if (data.code === 200) {
+                        setResult(data.result);
+                    } else {
+                        setErr(data.msg || '转换失败');
+                    }
+                } catch (e) {
+                    setErr('请求后端失败：' + e.message);
+                    console.error(e);
+                } finally {
+                    $btn.disabled = false;
+                    $btn.textContent = '开始转换';
+                }
+            }
+
+            $btn.addEventListener('click', doConvert);
+
+            $input.addEventListener('input', updateCounter);
+
+            $input.addEventListener('keydown', function (e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    doConvert();
+                }
+            });
+
+            document.querySelectorAll('input[name="mode"]').forEach(function (radio) {
+                radio.addEventListener('change', function () { setErr(''); });
+            });
+
+            $clearBtn.addEventListener('click', function () {
+                $input.value = '';
+                setResult('');
+                setErr('');
+                updateCounter();
+                $input.focus();
+            });
+
+            $sampleBtn.addEventListener('click', function () {
+                $input.value = SAMPLE;
+                setErr('');
+                updateCounter();
+                $input.focus();
+            });
+
+            $copyBtn.addEventListener('click', async function () {
+                const text = $output.textContent;
+                if (!text) return;
+                try {
+                    await navigator.clipboard.writeText(text);
+                } catch (e) {
+                    const ta = document.createElement('textarea');
+                    ta.value = text;
+                    ta.style.position = 'fixed';
+                    ta.style.opacity = '0';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    try { document.execCommand('copy'); } catch (err) { /* 忽略 */ }
+                    ta.remove();
+                }
+                const old = $copyBtn.textContent;
+                $copyBtn.textContent = '已复制';
+                setTimeout(function () { $copyBtn.textContent = old; }, 1500);
+            });
+
+            updateCounter();
+            setResult('');
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>汉字字形信息管理系统</title>
+    <style>
+        :root {
+            --ink: #1b2430;
+            --ink-soft: #46505f;
+            --muted: #7d8798;
+            --paper: #f6f2e9;
+            --paper-2: #fffdf8;
+            --line: #e5ddcc;
+            --seal: #b23a2e;
+            --seal-2: #d4783f;
+            --jade: #3f6f63;
+            --radius: 16px;
+            --serif: "Songti SC", "STSong", "SimSun", "Noto Serif SC", serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: "PingFang SC", "Microsoft Yahei", system-ui, -apple-system, sans-serif;
+            color: var(--ink);
+            line-height: 1.75;
+            background:
+                radial-gradient(900px 420px at 8% -10%, #fff8ea 0%, rgba(255, 248, 234, 0) 62%),
+                radial-gradient(760px 420px at 94% 4%, #f1eade 0%, rgba(241, 234, 222, 0) 58%),
+                var(--paper);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ============ 顶部导航 ============ */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(246, 242, 233, .82);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--line);
+        }
+        .navbar-inner {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+        .seal {
+            width: 38px;
+            height: 38px;
+            flex: none;
+            border-radius: 9px;
+            display: grid;
+            place-items: center;
+            font-family: var(--serif);
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff7ee;
+            background: linear-gradient(135deg, var(--seal), #c9503f);
+            box-shadow: 0 4px 12px rgba(178, 58, 46, .28);
+        }
+        .brand-text { font-size: 16px; font-weight: 700; letter-spacing: .5px; line-height: 1.3; }
+        .brand-text em {
+            display: block;
+            font-style: normal;
+            font-size: 12.5px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            color: var(--muted);
+        }
+        .nav-links { display: flex; gap: 26px; }
+        .nav-links a {
+            position: relative;
+            text-decoration: none;
+            color: var(--ink-soft);
+            font-size: 14.5px;
+            padding: 4px 0;
+            transition: color .2s;
+        }
+        .nav-links a::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--seal);
+            border-radius: 2px;
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform .28s;
+        }
+        .nav-links a:hover { color: var(--seal); }
+        .nav-links a:hover::after { transform: scaleX(1); }
+
+        /* ============ 首屏 ============ */
+        .hero {
+            position: relative;
+            overflow: hidden;
+            padding: 84px 24px 72px;
+        }
+        .hero-chars {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2vw;
+            font-family: var(--serif);
+            font-size: clamp(120px, 19vw, 260px);
+            line-height: 1;
+            color: rgba(27, 36, 48, .045);
+            pointer-events: none;
+            user-select: none;
+        }
+        .hero-chars span:nth-child(2n) { transform: translateY(-.12em); }
+        .hero-chars span:nth-child(3n) { transform: translateY(.1em); }
+
+        .hero-inner {
+            position: relative;
+            z-index: 1;
+            max-width: 820px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .eyebrow {
+            display: inline-block;
+            padding: 5px 16px;
+            margin-bottom: 22px;
+            font-size: 13px;
+            letter-spacing: 4px;
+            color: var(--seal);
+            border: 1px solid rgba(178, 58, 46, .3);
+            border-radius: 999px;
+            background: rgba(255, 253, 248, .7);
+        }
+        .hero h1 {
+            font-size: clamp(30px, 5vw, 52px);
+            line-height: 1.22;
+            letter-spacing: 2px;
+            font-weight: 800;
+        }
+        .hero h1 .hl {
+            display: inline-block;
+            background: linear-gradient(115deg, var(--seal) 10%, var(--seal-2) 90%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .lead {
+            max-width: 640px;
+            margin: 22px auto 0;
+            font-size: 16px;
+            color: var(--ink-soft);
+        }
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            justify-content: center;
+            margin-top: 34px;
+        }
+        .btn {
+            font: inherit;
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            padding: 13px 30px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: transform .2s, box-shadow .25s, background .25s, color .2s, border-color .2s;
+        }
+        .btn:active { transform: translateY(1px); }
+        .btn-primary {
+            color: #fff8f2;
+            background: linear-gradient(135deg, var(--seal), #c9513f);
+            box-shadow: 0 10px 22px rgba(178, 58, 46, .26);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 28px rgba(178, 58, 46, .32);
+        }
+        .btn-ghost {
+            color: var(--ink);
+            background: rgba(255, 253, 248, .85);
+            border-color: var(--line);
+        }
+        .btn-ghost:hover {
+            transform: translateY(-2px);
+            border-color: #d3c7ae;
+            box-shadow: 0 12px 22px rgba(27, 36, 48, .08);
+        }
+
+        .hero-stats {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px 0;
+            margin-top: 46px;
+            list-style: none;
+        }
+        .hero-stats li {
+            padding: 0 30px;
+            border-right: 1px solid var(--line);
+        }
+        .hero-stats li:last-child { border-right: none; }
+        .hero-stats strong {
+            display: block;
+            font-family: var(--serif);
+            font-size: 26px;
+            line-height: 1.2;
+            color: var(--seal);
+        }
+        .hero-stats span { font-size: 13px; color: var(--muted); letter-spacing: 1px; }
+
+        /* ============ 通用区块 ============ */
+        .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+        .section { padding: 58px 0 10px; }
+
+        .section-head { text-align: center; margin-bottom: 38px; }
+        .section-head h2 {
+            font-size: 26px;
+            letter-spacing: 2px;
+            font-weight: 800;
+        }
+        .section-head h2::after {
+            content: "";
+            display: block;
+            width: 44px;
+            height: 3px;
+            margin: 14px auto 0;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--seal), var(--seal-2));
+        }
+        .section-head p {
+            margin-top: 14px;
+            font-size: 14.5px;
+            color: var(--muted);
+        }
+
+        /* ============ 功能卡片 ============ */
+        .card-wrap {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 22px;
+        }
+        .card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            padding: 26px 26px 22px;
+            background: var(--paper-2);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            cursor: pointer;
+            overflow: hidden;
+            transition: transform .28s, box-shadow .28s, border-color .28s;
+        }
+        .card::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--seal), var(--seal-2));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform .32s;
+        }
+        .card:hover,
+        .card:focus-visible {
+            transform: translateY(-7px);
+            border-color: #d9cdb4;
+            box-shadow: 0 18px 36px rgba(27, 36, 48, .11);
+            outline: none;
+        }
+        .card:hover::before,
+        .card:focus-visible::before { transform: scaleX(1); }
+
+        .card-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+        .card-icon {
+            width: 46px;
+            height: 46px;
+            display: grid;
+            place-items: center;
+            font-family: var(--serif);
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--seal);
+            background: linear-gradient(135deg, #f6ead9, #fbf4e7);
+            border: 1px solid #eddfc7;
+            border-radius: 12px;
+        }
+        .card-index {
+            font-family: Georgia, serif;
+            font-size: 13px;
+            letter-spacing: 2px;
+            color: #bfb7a5;
+        }
+        .card h3 {
+            font-size: 19px;
+            letter-spacing: .5px;
+            margin-bottom: 10px;
+        }
+        .card p {
+            font-size: 14px;
+            color: var(--ink-soft);
+            line-height: 1.75;
+        }
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 18px 0 0;
+            padding: 0;
+            list-style: none;
+        }
+        .card-tags li {
+            padding: 3px 11px;
+            font-size: 12px;
+            color: var(--jade);
+            background: rgba(63, 111, 99, .08);
+            border-radius: 999px;
+        }
+        .card-more {
+            margin-top: auto;
+            padding-top: 20px;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--seal);
+            letter-spacing: 1px;
+        }
+        .card-more i {
+            font-style: normal;
+            display: inline-block;
+            transition: transform .25s;
+        }
+        .card:hover .card-more i { transform: translateX(5px); }
+
+        /* ============ 字形时间轴 ============ */
+        .timeline {
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            list-style: none;
+            padding: 10px 0 0;
+        }
+        .timeline::before {
+            content: "";
+            position: absolute;
+            top: 24px;
+            left: 8%;
+            right: 8%;
+            height: 2px;
+            background: linear-gradient(90deg, #e2d9c6, #c8bba0, #e2d9c6);
+        }
+        .timeline li { position: relative; text-align: center; }
+        .timeline .dot {
+            display: block;
+            width: 15px;
+            height: 15px;
+            margin: 10px auto 16px;
+            border-radius: 50%;
+            background: var(--paper-2);
+            border: 2px solid var(--seal);
+            position: relative;
+            z-index: 1;
+            transition: transform .25s, background .25s;
+        }
+        .timeline li:hover .dot {
+            transform: scale(1.28);
+            background: var(--seal);
+        }
+        .timeline h4 {
+            font-family: var(--serif);
+            font-size: 16px;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .timeline p { font-size: 12.5px; color: var(--muted); }
+
+        /* ============ 使用手册 ============ */
+        .manual-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 22px;
+        }
+        .manual-item {
+            padding: 28px 26px;
+            background: rgba(255, 253, 248, .7);
+            border: 1px solid var(--line);
+            border-left: 3px solid rgba(178, 58, 46, .45);
+            border-radius: 4px 14px 14px 4px;
+        }
+        .manual-num {
+            display: block;
+            font-family: Georgia, serif;
+            font-size: 13px;
+            letter-spacing: 2px;
+            color: var(--seal);
+            margin-bottom: 10px;
+        }
+        .manual-item h4 { font-size: 16.5px; margin-bottom: 8px; letter-spacing: .5px; }
+        .manual-item p { font-size: 14px; color: var(--ink-soft); }
+
+        /* ============ 页脚 ============ */
+        footer {
+            margin-top: 72px;
+            padding: 30px 24px 40px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--muted);
+            border-top: 1px solid var(--line);
+            letter-spacing: 1px;
+        }
+        footer .fz { font-family: var(--serif); color: var(--ink-soft); letter-spacing: 8px; margin-bottom: 6px; }
+
+        /* ============ 响应式 ============ */
+        @media (max-width: 860px) {
+            .nav-links { display: none; }
+        }
+        @media (max-width: 640px) {
+            .hero { padding: 60px 20px 54px; }
+            .hero-stats li { padding: 0 18px; }
+            .section { padding: 44px 0 6px; }
+            .timeline { grid-template-columns: repeat(3, 1fr); row-gap: 26px; }
+            .timeline::before { display: none; }
+            .hero-chars { font-size: 34vw; }
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <!-- ===== 顶部导航 ===== -->
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a class="brand" href="#top">
+                <span class="seal">篆</span>
+                <span class="brand-text">
+                    汉字字形
+                    <em>信息管理系统</em>
+                </span>
+            </a>
+            <div class="nav-links">
+                <a href="#features">核心功能</a>
+                <a href="#timeline">字形</a>
+                <a href="#manual">使用手册</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== 首屏 ===== -->
+    <header class="hero" id="top">
+        <div class="hero-chars" aria-hidden="true">
+            <span>鼎</span><span>書</span><span>雲</span><span>馬</span><span>樂</span>
+        </div>
+        <div class="hero-inner">
+            <span class="eyebrow">汉字 · 字形 · 数据</span>
+            <h1>汉字字形<br><span class="hl">信息管理系统</span></h1>
+            <p class="lead">
+                汉字在数千年的演变中，形成了简体、繁体、小篆等具有代表性的字形。
+                本系统以 Web 应用的形式，把简繁转换、小篆渲染与字形元数据查询整合到同一处，
+                让每一次查阅都有迹可循。
+            </p>
+            <div class="hero-actions">
+                <button class="btn btn-primary" @click="goConvert">开始简繁转换</button>
+                <button class="btn btn-ghost" @click="goXiaoZhuan">生成小篆字形</button>
+            </div>
+            <ul class="hero-stats">
+                <li><strong>3</strong><span>核心模块</span></li>
+                <li><strong>2</strong><span>历史记录表</span></li>
+                <li><strong>100%</strong><span>记录留存</span></li>
+            </ul>
+        </div>
+    </header>
+
+    <main class="wrap">
+        <!-- ===== 核心功能 ===== -->
+        <section class="section" id="features">
+            <div class="section-head">
+                <h2>核心功能</h2>
+                <p>三大模块覆盖简繁互转、小篆渲染与查询记录管理</p>
+            </div>
+
+            <div class="card-wrap">
+                <!-- 1. 简繁双向转换 -->
+                <article class="card" role="button" tabindex="0"
+                         @click="goConvert" @keyup.enter="goConvert">
+                    <div class="card-head">
+                        <span class="card-icon">⇄</span>
+                        <span class="card-index">01</span>
+                    </div>
+                    <h3>简繁双向转换</h3>
+                    <p>支持简体转繁体、繁体转简体实时转换，针对“一简多繁”的歧义字提供适配处理，还原正确繁体写法。</p>
+                    <ul class="card-tags">
+                        <li>简 → 繁</li>
+                        <li>繁 → 简</li>
+                        <li>一简多繁</li>
+                    </ul>
+                    <span class="card-more">进入模块 <i>→</i></span>
+                </article>
+
+                <!-- 2. 小篆字形生成 -->
+                <article class="card" role="button" tabindex="0"
+                         @click="goXiaoZhuan" @keyup.enter="goXiaoZhuan">
+                    <div class="card-head">
+                        <span class="card-icon">篆</span>
+                        <span class="card-index">02</span>
+                    </div>
+                    <h3>小篆字形生成</h3>
+                    <p>输入汉字即可渲染对应的小篆字形，同步展示拼音、笔画数量、字形结构、Unicode 编码等基础元数据。</p>
+                    <ul class="card-tags">
+                        <li>字形渲染</li>
+                        <li>属性展示</li>
+                        <li>顺序浏览</li>
+                    </ul>
+                    <span class="card-more">进入模块 <i>→</i></span>
+                </article>
+
+                <!-- 3. 查询历史管理 -->
+                <article class="card" role="button" tabindex="0"
+                         @click="goHistory" @keyup.enter="goHistory">
+                    <div class="card-head">
+                        <span class="card-icon">史</span>
+                        <span class="card-index">03</span>
+                    </div>
+                    <h3>查询历史管理</h3>
+                    <p>自动保存每一次简繁转换与小篆查询记录，统一汇总展示，支持查看过往内容并回溯打开历史条目。</p>
+                    <ul class="card-tags">
+                        <li>自动记录</li>
+                        <li>统一汇总</li>
+                        <li>回溯查看</li>
+                    </ul>
+                    <span class="card-more">进入模块 <i>→</i></span>
+                </article>
+
+            </div>
+        </section>
+
+        <!-- ===== 字形演变脉络 ===== -->
+        <section class="section" id="timeline">
+            <div class="section-head">
+                <h2>字形演变脉络</h2>
+                <p>从甲骨文到简体字，汉字字形历经数千年的简化与规范</p>
+            </div>
+            <ol class="timeline">
+                <li>
+                    <span class="dot"></span>
+                    <h4>甲骨文</h4>
+                    <p>商代 · 契刻</p>
+                </li>
+                <li>
+                    <span class="dot"></span>
+                    <h4>金文</h4>
+                    <p>商周 · 铸铭</p>
+                </li>
+                <li>
+                    <span class="dot"></span>
+                    <h4>小篆</h4>
+                    <p>秦 · 统一字形</p>
+                </li>
+                <li>
+                    <span class="dot"></span>
+                    <h4>隶书</h4>
+                    <p>汉 · 化圆为方</p>
+                </li>
+                <li>
+                    <span class="dot"></span>
+                    <h4>楷书</h4>
+                    <p>魏晋以后 · 定型</p>
+                </li>
+                <li>
+                    <span class="dot"></span>
+                    <h4>简体字</h4>
+                    <p>现代 · 规范简化</p>
+                </li>
+            </ol>
+            <div style="text-align:center; margin-top:28px;">
+                <a class="btn btn-ghost" href="{% url 'convert1:evolution' %}">查看汉字演变简史 →</a>
+            </div>
+        </section>
+
+        <!-- ===== 使用手册 ===== -->
+        <section class="section" id="manual">
+            <div class="section-head">
+                <h2>简易使用手册</h2>
+                <p>三步上手，各模块操作路径一目了然</p>
+            </div>
+            <div class="manual-grid">
+                <div class="manual-item">
+                    <span class="manual-num">STEP 01</span>
+                    <h4>简繁双向转换</h4>
+                    <p>在输入框粘贴或输入文本，选择转换方向，一键完成简繁互转；转换结果可直接复制使用。</p>
+                </div>
+                <div class="manual-item">
+                    <span class="manual-num">STEP 02</span>
+                    <h4>小篆字形生成</h4>
+                    <p>输入单个汉字点击查询，页面展示小篆字形与汉字属性；使用【上一个】【下一个】顺序浏览候选汉字。</p>
+                </div>
+                <div class="manual-item">
+                    <span class="manual-num">STEP 03</span>
+                    <h4>查询历史管理</h4>
+                    <p>系统自动汇总所有简繁、小篆查询记录，可查看过往查询内容，并支持回溯打开历史条目。</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="fz">鼎 書 雲 馬 樂</div>
+        课程设计 · 汉字字形 Web 信息管理系统
+    </footer>
+</div>
+
+<script src="/static/vue.global.js"></script>
+<script>
+const { createApp } = Vue;
+createApp({
+    methods: {
+        goConvert() {
+            location.href = "{% url 'convert1:convertUI' %}";
+        },
+        goXiaoZhuan() {
+            location.href = "{% url 'convert1:xiaozhuanUI' %}";
+        },
+        goHistory() {
+            location.href = "{% url 'convert1:historyCenter' %}";
+        }
+    }
+}).mount("#app");
+</script>
+</body>
+</html>

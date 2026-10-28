@@ -1,0 +1,1003 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>汉字演变简史 · 汉字字形信息管理系统</title>
+    <link rel="icon" href="data:,">
+    <style>
+        :root {
+            --ink: #1b2430;
+            --ink-soft: #46505f;
+            --muted: #7d8798;
+            --paper: #f6f2e9;
+            --paper-2: #fffdf8;
+            --line: #e5ddcc;
+            --seal: #b23a2e;
+            --seal-2: #d4783f;
+            --jade: #3f6f63;
+            --gold: #d4a373;
+            --brown: #8b7355;
+            --serif: "Songti SC", "STSong", "SimSun", "Noto Serif SC", serif;
+            --kai: "STKaiti", "KaiTi", "楷体", serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: "PingFang SC", "Microsoft Yahei", system-ui, -apple-system, sans-serif;
+            color: var(--ink);
+            line-height: 1.8;
+            min-height: 100vh;
+            background:
+                radial-gradient(900px 420px at 8% -10%, #fff8ea 0%, rgba(255, 248, 234, 0) 62%),
+                radial-gradient(760px 420px at 94% 4%, #f1eade 0%, rgba(241, 234, 222, 0) 58%),
+                var(--paper);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { color: inherit; }
+
+        /* ============ 顶部导航 ============ */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(246, 242, 233, .85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--line);
+        }
+        .navbar-inner {
+            max-width: 1060px;
+            margin: 0 auto;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+        .seal {
+            width: 36px;
+            height: 36px;
+            flex: none;
+            border-radius: 9px;
+            display: grid;
+            place-items: center;
+            font-family: var(--serif);
+            font-size: 19px;
+            font-weight: 700;
+            color: #fff7ee;
+            background: linear-gradient(135deg, var(--seal), #c9503f);
+            box-shadow: 0 4px 12px rgba(178, 58, 46, .28);
+        }
+        .brand-text {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: .5px;
+            line-height: 1.3;
+        }
+        .brand-text em {
+            display: block;
+            font-style: normal;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            color: var(--muted);
+        }
+        .back-link {
+            font-size: 14px;
+            color: var(--ink-soft);
+            text-decoration: none;
+            padding: 7px 16px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: rgba(255, 253, 248, .75);
+            transition: border-color .2s, color .2s, box-shadow .2s, transform .2s;
+        }
+        .back-link:hover {
+            color: var(--seal);
+            border-color: #d3c7ae;
+            box-shadow: 0 8px 18px rgba(27, 36, 48, .08);
+            transform: translateY(-1px);
+        }
+
+        /* ============ 主体 ============ */
+        .shell {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 34px 24px 72px;
+        }
+
+        .crumb {
+            font-size: 13px;
+            color: var(--muted);
+            letter-spacing: .5px;
+            margin-bottom: 12px;
+        }
+        .crumb a { text-decoration: none; transition: color .2s; }
+        .crumb a:hover { color: var(--seal); }
+        .crumb span { margin: 0 7px; color: #c9bfa9; }
+
+        .page-head { margin-bottom: 30px; }
+        .page-head h1 {
+            font-family: var(--serif);
+            font-size: 32px;
+            letter-spacing: 3px;
+            font-weight: 800;
+        }
+        .page-head h1::after {
+            content: "";
+            display: block;
+            width: 44px;
+            height: 3px;
+            margin-top: 14px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--seal), var(--seal-2));
+        }
+        .page-head .lead {
+            margin-top: 16px;
+            font-size: 15px;
+            color: var(--ink-soft);
+        }
+
+        /* ============ 通用区块标题 ============ */
+        .section { margin-top: 50px; }
+        .section-head {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .section-head h2 {
+            font-family: var(--serif);
+            font-size: 23px;
+            letter-spacing: 2px;
+            font-weight: 800;
+        }
+        .section-head h2::before {
+            content: "";
+            display: inline-block;
+            width: 3px;
+            height: 17px;
+            margin-right: 10px;
+            border-radius: 2px;
+            background: linear-gradient(180deg, var(--seal), var(--seal-2));
+            vertical-align: -2px;
+        }
+        .section-head span {
+            font-size: 12.5px;
+            color: var(--muted);
+            letter-spacing: .5px;
+        }
+        .section-intro {
+            font-size: 14.5px;
+            color: var(--ink-soft);
+            margin-bottom: 22px;
+            max-width: 760px;
+        }
+
+        /* ============ 垂直时间轴 ============ */
+        .timeline {
+            position: relative;
+            list-style: none;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: "";
+            position: absolute;
+            left: 7px;
+            top: 8px;
+            bottom: 8px;
+            width: 2px;
+            background: linear-gradient(180deg, #e0d6c2, #cbbfa4, #e0d6c2);
+        }
+        .tl-item {
+            position: relative;
+            padding-bottom: 22px;
+        }
+        .tl-item:last-child { padding-bottom: 0; }
+        .tl-item::before {
+            content: "";
+            position: absolute;
+            left: -30px;
+            top: 22px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--paper-2);
+            border: 2px solid var(--seal);
+            transition: background .2s, transform .2s;
+        }
+        .tl-item:hover::before {
+            background: var(--seal);
+            transform: scale(1.15);
+        }
+        .tl-card {
+            background: var(--paper-2);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 20px 24px;
+            box-shadow: 0 8px 24px rgba(27, 36, 48, .05);
+            transition: transform .22s, box-shadow .25s, border-color .25s;
+        }
+        .tl-card:hover {
+            transform: translateX(4px);
+            border-color: #dccfb6;
+            box-shadow: 0 12px 30px rgba(27, 36, 48, .09);
+        }
+        .tl-era {
+            display: inline-block;
+            padding: 2px 12px;
+            margin-bottom: 10px;
+            font-size: 12px;
+            letter-spacing: 1.5px;
+            color: var(--brown);
+            background: #f7efe0;
+            border: 1px solid #ecdfc7;
+            border-radius: 999px;
+        }
+        .tl-card h3 {
+            font-family: var(--serif);
+            font-size: 19px;
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+        }
+        .tl-card p {
+            font-size: 14px;
+            color: var(--ink-soft);
+            margin-bottom: 10px;
+        }
+        .tl-points {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .tl-points li {
+            position: relative;
+            padding-left: 16px;
+            font-size: 13.5px;
+            color: var(--ink-soft);
+            line-height: 1.7;
+        }
+        .tl-points li::before {
+            content: "";
+            position: absolute;
+            left: 2px;
+            top: .72em;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--gold);
+        }
+        .tl-points strong { color: var(--ink); }
+
+        /* ============ 专题卡片 ============ */
+        .feature {
+            background: var(--paper-2);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 28px 30px;
+            box-shadow: 0 10px 30px rgba(27, 36, 48, .06);
+            position: relative;
+            overflow: hidden;
+        }
+        .feature::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--seal), var(--gold), var(--brown));
+        }
+        .feature + .feature { margin-top: 22px; }
+        .feature h3 {
+            font-family: var(--serif);
+            font-size: 21px;
+            letter-spacing: 2px;
+            margin-bottom: 14px;
+        }
+        .feature p {
+            font-size: 14.5px;
+            color: var(--ink-soft);
+            margin-bottom: 12px;
+        }
+        .feature p:last-child { margin-bottom: 0; }
+        .feature strong { color: var(--ink); }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+            margin-top: 18px;
+        }
+        .f-item {
+            padding: 14px 16px;
+            background: #faf5ea;
+            border: 1px solid #ede4d3;
+            border-radius: 10px;
+            transition: transform .2s, box-shadow .2s;
+        }
+        .f-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(27, 36, 48, .06);
+        }
+        .f-item h4 {
+            font-size: 13px;
+            letter-spacing: 1.5px;
+            color: var(--brown);
+            margin-bottom: 6px;
+        }
+        .f-item p {
+            font-size: 13.5px;
+            color: var(--ink-soft);
+            margin: 0;
+            line-height: 1.7;
+        }
+
+        /* ============ 历史节点列表（繁/简专题内） ============ */
+        .era-list {
+            list-style: none;
+            margin-top: 18px;
+            border-left: 2px solid #e5ddcc;
+            padding-left: 22px;
+            position: relative;
+        }
+        .era-list li {
+            position: relative;
+            padding-bottom: 18px;
+        }
+        .era-list li:last-child { padding-bottom: 0; }
+        .era-list li::before {
+            content: "";
+            position: absolute;
+            left: -30px;
+            top: 8px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--paper-2);
+            border: 2px solid var(--seal);
+        }
+        .era-list .era-time {
+            display: inline-block;
+            font-family: var(--serif);
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--seal);
+            letter-spacing: 1px;
+            margin-right: 8px;
+        }
+        .era-list .era-title {
+            font-size: 14.5px;
+            font-weight: 600;
+            color: var(--ink);
+            letter-spacing: .5px;
+        }
+        .era-list p {
+            font-size: 13.5px;
+            color: var(--ink-soft);
+            margin: 4px 0 0;
+            line-height: 1.75;
+        }
+
+        /* ============ 简繁对照表 ============ */
+        .cmp-card {
+            background: var(--paper-2);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            box-shadow: 0 8px 26px rgba(27, 36, 48, .05);
+            overflow: hidden;
+        }
+        .cmp-row {
+            display: grid;
+            grid-template-columns: 100px 1fr 1fr;
+            border-bottom: 1px solid #f0eadd;
+        }
+        .cmp-row:last-child { border-bottom: none; }
+        .cmp-row > div {
+            padding: 13px 18px;
+            font-size: 14px;
+            color: var(--ink-soft);
+            line-height: 1.7;
+        }
+        .cmp-row > div:first-child {
+            font-size: 12.5px;
+            letter-spacing: 2px;
+            color: var(--muted);
+            background: #faf5ea;
+            border-right: 1px solid #f0eadd;
+        }
+        .cmp-row > div:nth-child(2) { border-right: 1px solid #f0eadd; }
+        .cmp-row.head > div {
+            background: #f4eee2;
+            font-weight: 600;
+            color: var(--ink);
+            font-size: 13.5px;
+            letter-spacing: 1px;
+        }
+        .cmp-row.head > div:first-child { background: #f4eee2; }
+        .cmp-row .big-char {
+            font-family: var(--kai);
+            font-size: 22px;
+            letter-spacing: 3px;
+            color: var(--seal);
+        }
+
+        /* ============ 两岸三地用字 ============ */
+        .region-card {
+            background: var(--paper-2);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            box-shadow: 0 8px 26px rgba(27, 36, 48, .05);
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        .region-row {
+            display: grid;
+            grid-template-columns: 120px 1fr 1fr 1fr;
+            border-bottom: 1px solid #f0eadd;
+        }
+        .region-row:last-child { border-bottom: none; }
+        .region-row > div {
+            padding: 13px 16px;
+            font-size: 13.5px;
+            color: var(--ink-soft);
+            line-height: 1.7;
+        }
+        .region-row > div:not(:last-child) { border-right: 1px solid #f0eadd; }
+        .region-row > div:first-child {
+            font-size: 12.5px;
+            letter-spacing: 2px;
+            color: var(--muted);
+            background: #faf5ea;
+        }
+        .region-row.head > div {
+            background: #f4eee2;
+            font-weight: 600;
+            color: var(--ink);
+            font-size: 13px;
+            letter-spacing: 1px;
+        }
+        .region-row.head > div:first-child { background: #f4eee2; }
+        .region-row .r-char {
+            font-family: var(--kai);
+            font-size: 20px;
+            color: var(--seal);
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+
+        /* ============ 小结 ============ */
+        .summary {
+            margin-top: 50px;
+            padding: 26px 30px;
+            background: linear-gradient(135deg, #fdfcfb 0%, #f4f1ec 100%);
+            border: 1px solid #e8e2d8;
+            border-radius: 16px;
+            box-shadow: 0 2px 14px rgba(139, 115, 85, .07);
+        }
+        .summary h3 {
+            font-family: var(--serif);
+            font-size: 18px;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+        }
+        .summary p {
+            font-size: 14px;
+            color: var(--ink-soft);
+            line-height: 1.85;
+        }
+
+        /* ============ 页脚 ============ */
+        footer {
+            margin-top: 56px;
+            padding: 26px 24px 34px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--muted);
+            border-top: 1px solid var(--line);
+            letter-spacing: 1px;
+        }
+        footer .fz {
+            font-family: var(--serif);
+            color: var(--ink-soft);
+            letter-spacing: 8px;
+            margin-bottom: 6px;
+        }
+
+        /* ============ 响应式 ============ */
+        @media (max-width: 760px) {
+            .shell { padding: 26px 16px 56px; }
+            .page-head h1 { font-size: 25px; }
+            .feature { padding: 22px 20px; }
+            .cmp-row {
+                grid-template-columns: 1fr;
+                border-bottom: 1px solid var(--line);
+            }
+            .cmp-row > div {
+                padding: 10px 16px;
+                border-right: none !important;
+            }
+            .cmp-row > div:first-child {
+                padding-bottom: 4px;
+                background: transparent;
+                font-weight: 600;
+                color: var(--ink);
+            }
+            .cmp-row.head { display: none; }
+            .region-row {
+                grid-template-columns: 1fr;
+                border-bottom: 1px solid var(--line);
+            }
+            .region-row > div {
+                padding: 10px 16px;
+                border-right: none !important;
+            }
+            .region-row > div:first-child {
+                padding-bottom: 4px;
+                background: transparent;
+                font-weight: 600;
+                color: var(--ink);
+            }
+            .region-row.head { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ===== 顶部导航 ===== -->
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a class="brand" href="{% url 'home' %}">
+                <span class="seal">篆</span>
+                <span class="brand-text">
+                    汉字字形
+                    <em>信息管理系统</em>
+                </span>
+            </a>
+            <a class="back-link" href="{% url 'home' %}">← 返回系统首页</a>
+        </div>
+    </nav>
+
+    <main class="shell">
+        <!-- 面包屑 -->
+        <div class="crumb">
+            <a href="{% url 'home' %}">首页</a><span>/</span>汉字演变简史
+        </div>
+
+        <!-- 页面标题 -->
+        <header class="page-head">
+            <h1>汉字演变简史</h1>
+            <p class="lead">
+                汉字是世界上最古老的文字之一，从商代甲骨文到今天通行的楷书与简体字，字形几经变化，却始终一脉相承。
+                本页按时间顺序梳理主要字体阶段，并重点介绍繁体字与简体字在近现代的演变脉络。
+            </p>
+        </header>
+
+        <!-- ===== 一、演变总览 ===== -->
+        <section class="section" id="timeline">
+            <div class="section-head">
+                <h2>字形演变脉络</h2>
+                <span>甲骨 → 金文 → 小篆 → 隶书 → 楷书 → 简繁</span>
+            </div>
+
+            <ol class="timeline">
+                <li class="tl-item">
+                    <div class="tl-card">
+                        <span class="tl-era">商代晚期 · 约前1300年</span>
+                        <h3>甲骨文</h3>
+                        <p>刻写在龟甲、兽骨上的占卜文字，是目前所见最早的成体系汉字。</p>
+                        <ul class="tl-points">
+                            <li>1899 年由王懿荣在“龙骨”上发现，主要出土于殷墟</li>
+                            <li>已发现单字约 <strong>4500 个</strong>，可识别约 1500 个</li>
+                            <li>象形性强，笔画瘦硬，多方折，字形大小不一</li>
+                        </ul>
+                    </div>
+                </li>
+
+                <li class="tl-item">
+                    <div class="tl-card">
+                        <span class="tl-era">商周 · 约前1200—前221年</span>
+                        <h3>金文</h3>
+                        <p>铸刻在青铜器上的铭文，又称钟鼎文，是甲骨文之后的重要古文字阶段。</p>
+                        <ul class="tl-points">
+                            <li>笔画肥厚圆润，结构比甲骨文更规整</li>
+                            <li>代表作有<strong>毛公鼎</strong>（近 500 字）、<strong>大盂鼎</strong></li>
+                            <li>战国时期各国文字异形，为秦统一文字埋下伏笔</li>
+                        </ul>
+                    </div>
+                </li>
+
+                <li class="tl-item">
+                    <div class="tl-card">
+                        <span class="tl-era">秦代 · 前221年</span>
+                        <h3>小篆</h3>
+                        <p>秦始皇统一六国后推行“书同文”，以小篆作为全国标准字形，是汉字第一次系统性规范。</p>
+                        <ul class="tl-points">
+                            <li>由大篆（籀文）简化整理而来，线条圆转匀称</li>
+                            <li>字形呈长方形，结构对称，笔画粗细一致</li>
+                            <li>东汉许慎《说文解字》以小篆为字头，收 <strong>9353 字</strong>，立 <strong>540 部首</strong></li>
+                        </ul>
+                    </div>
+                </li>
+
+                <li class="tl-item">
+                    <div class="tl-card">
+                        <span class="tl-era">汉代</span>
+                        <h3>隶书</h3>
+                        <p>“隶变”是汉字从古文字走向今文字的分水岭，汉字自此脱离象形，走向符号化。</p>
+                        <ul class="tl-points">
+                            <li>化圆为方、化弧为直，出现“蚕头燕尾”的波磔</li>
+                            <li>书写效率大幅提高，成为汉代通行字体</li>
+                            <li>字形结构基本定型，为楷书奠定基础</li>
+                        </ul>
+                    </div>
+                </li>
+
+                <li class="tl-item">
+                    <div class="tl-card">
+                        <span class="tl-era">魏晋至唐</span>
+                        <h3>楷书</h3>
+                        <p>由隶书演变而来，笔画平直、结构方正，因“可作楷模”而得名，一直沿用至今。</p>
+                        <ul class="tl-points">
+                            <li>魏晋时期逐步定型，唐代走向成熟</li>
+                            <li>代表书家有欧阳询、颜真卿、柳公权</li>
+                            <li>是现代印刷体与规范汉字的基础字形</li>
+                        </ul>
+                    </div>
+                </li>
+
+                <li class="tl-item">
+                    <div class="tl-card">
+                        <span class="tl-era">20世纪以来</span>
+                        <h3>繁体字与简体字</h3>
+                        <p>在楷书基础上，汉字形成了繁体与简体两套通行字形系统，分别在不同地区使用。</p>
+                        <ul class="tl-points">
+                            <li>繁体字是历代传承的正体字系统，至今在港澳台地区通行</li>
+                            <li>简体字于 1956 年公布《汉字简化方案》，1964 年形成《简化字总表》</li>
+                            <li>简化以“约定俗成、稳步前进”为原则，并非另造新字</li>
+                        </ul>
+                    </div>
+                </li>
+            </ol>
+        </section>
+
+        <!-- ===== 二、繁体字专题 ===== -->
+        <section class="section" id="fanti">
+            <div class="section-head">
+                <h2>繁体字的历史</h2>
+                <span>从魏晋楷化到当代的传承</span>
+            </div>
+            <p class="section-intro">
+                繁体字不是“古代字”，而是楷书定型后历代沿用的正体字系统。它承接隶书与楷化成果，
+                经唐宋字书规范、明清字书总结，形成今天我们所见的字形体系，在 20 世纪汉字简化之前长期作为通行标准。
+            </p>
+
+            <div class="feature">
+                <h3>一、繁体字的形成：从楷化到字书规范</h3>
+                <p>
+                    隶变之后，汉字的结构基本定型，但写法仍有俗、通、正的区别。魏晋时期，楷书逐步成熟，
+                    钟繇、王羲之等书家的书写实践推动了楷体的规范化。到唐代，<strong>“字样之学”</strong>兴起，
+                    颜师古作《颜氏字样》、颜元孙作《干禄字书》，把字形分为“俗、通、正”三体，明确以“正体”作为官方规范，
+                    这标志着繁体字系统开始走向稳定。
+                </p>
+                <p>
+                    宋代雕版印刷普及，字形的规范由手写扩展到刻版，进一步推动了字形统一。明清两代的字书对前代用字做了系统整理，
+                    《康熙字典》收字 <strong>47035 个</strong>，是传统字书收字的高峰，为现代繁体字的字形提供了重要参照。
+                </p>
+
+                <ul class="era-list">
+                    <li>
+                        <span class="era-time">魏晋</span>
+                        <span class="era-title">楷书定型</span>
+                        <p>钟繇、王羲之的书写实践确立了楷书的基本面貌，汉字进入今文字阶段。</p>
+                    </li>
+                    <li>
+                        <span class="era-time">唐代</span>
+                        <span class="era-title">字样之学</span>
+                        <p>颜元孙《干禄字书》区分俗、通、正三体，确立以正体为规范的用字传统。</p>
+                    </li>
+                    <li>
+                        <span class="era-time">宋代</span>
+                        <span class="era-title">雕版印刷</span>
+                        <p>印刷术普及让字形规范从手写扩展到刻版，字形趋于统一，影响后世刻本用字。</p>
+                    </li>
+                    <li>
+                        <span class="era-time">明清</span>
+                        <span class="era-title">字书集成</span>
+                        <p>《康熙字典》收 47035 字，是传统字书的集大成者，为繁体字形提供重要参照。</p>
+                    </li>
+                    <li>
+                        <span class="era-time">20 世纪以前</span>
+                        <span class="era-title">长期通行</span>
+                        <p>在汉字简化之前，繁体字是中国大陆、港澳台地区共同使用的标准字形。</p>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="feature">
+                <h3>二、繁体字在当代的使用</h3>
+                <p>
+                    今天，繁体字仍在中国香港、澳门、台湾地区作为日常用字，并在古籍整理、书法篆刻、传统工艺与学术研究中广泛使用。
+                    联合国在 2008 年以前的中文文件也曾长期使用繁体字，后改为简体字。
+                </p>
+                <p>
+                    繁体字系统内部也存在<strong>异体字</strong>问题。例如“為/爲”“裡/裏”“線/綫”等，
+                    不同字书、不同地区、不同历史时期都有写法差异，这也使得繁简转换中“一简多繁”的处理需要格外谨慎。
+                </p>
+
+                <div class="feature-grid">
+                    <div class="f-item">
+                        <h4>使用地区</h4>
+                        <p>中国香港、澳门、台湾地区及海外华人社群；古籍、书法、印章等领域。</p>
+                    </div>
+                    <div class="f-item">
+                        <h4>异体字问题</h4>
+                        <p>“為/爲”“裡/裏”等字存在多种写法，不同地区用字习惯略有差异。</p>
+                    </div>
+                    <div class="f-item">
+                        <h4>与简体的关系</h4>
+                        <p>多数繁体字与简体字一一对应，但“一简多繁”需要结合语境判断。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== 三、简体字专题 ===== -->
+        <section class="section" id="jianti">
+            <div class="section-head">
+                <h2>简体字的历史</h2>
+                <span>从清末主张到 20 世纪规范</span>
+            </div>
+            <p class="section-intro">
+                简体字并不是 20 世纪 50 年代突然出现的。早在清末民国，文字改革者就已提出简化主张，
+                民间也长期流行着大量俗字。真正把简化字上升为国家规范，是 1956 年《汉字简化方案》与 1964 年《简化字总表》的公布。
+            </p>
+
+            <div class="feature">
+                <h3>一、简化前奏：清末民国的文字改革思潮</h3>
+                <p>
+                    1909 年，陆费逵在《教育杂志》发表《普通教育当采用俗体字》，主张在教育中使用笔画简单的俗字。
+                    1920 年代，钱玄同连续发表《减省汉字笔画的提议》等文章，系统提出简化汉字的八种策略，成为现代汉字简化的重要思想来源。
+                </p>
+                <p>
+                    1935 年 8 月，国民政府教育部公布《第一批简体字表》，共收 <strong>324 个</strong>简体字。
+                    但由于争议激烈，次年 2 月即被撤回，简体字首次官方推行以夭折告终。与此同时，延安等解放区在印刷和书写中广泛使用简化字，为后来的简化方案积累了实践基础。
+                </p>
+
+                <ul class="era-list">
+                    <li>
+                        <span class="era-time">1909</span>
+                        <span class="era-title">陆费逵《普通教育当采用俗体字》</span>
+                        <p>较早提出在教育中使用笔画简单俗字的主张，开启近代简化思潮。</p>
+                    </li>
+                    <li>
+                        <span class="era-time">1920s</span>
+                        <span class="era-title">钱玄同的系统主张</span>
+                        <p>提出减省汉字笔画的八种策略，主张“简体字”应成为正式用字。</p>
+                    </li>
+                    <li>
+                        <span class="era-time">1935</span>
+                        <span class="era-title">《第一批简体字表》</span>
+                        <p>国民政府教育部公布 324 个简体字，次年因争议撤回，未及施行。</p>
+                    </li>
+                    <li>
+                        <span class="era-time">1940s</span>
+                        <span class="era-title">解放区实践</span>
+                        <p>延安等解放区在印刷、书写中广泛使用简化字，为后来的简化方案积累经验。</p>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="feature">
+                <h3>二、新中国的汉字简化</h3>
+                <p>
+                    1956 年 1 月 28 日，国务院公布《汉字简化方案》，分批推行简化字；1964 年 5 月，
+                    中国文字改革委员会编成《简化字总表》，共收简化字 <strong>2236 个</strong>，成为此后中国大陆通行的规范字形。
+                    1986 年 10 月，国家语言文字工作委员会重新发表《简化字总表》，对个别字作了微调（如“叠”字不再作简化字）。
+                </p>
+                <p>
+                    1977 年曾公布《第二次汉字简化方案（草案）》（即“二简字”），因简化过度、引起混乱，于 1986 年正式废止。
+                    这一反复也说明，汉字简化需要兼顾规范性与社会使用习惯，不能脱离实际。
+                </p>
+
+                <ul class="era-list">
+                    <li>
+                        <span class="era-time">1956.1</span>
+                        <span class="era-title">《汉字简化方案》</span>
+                        <p>国务院公布，分批推行简化字，是新中国汉字规范化的起点。</p>
+                    </li>
+                    <li>
+                        <span class="era-time">1964.5</span>
+                        <span class="era-title">《简化字总表》</span>
+                        <p>收简化字 2236 个，成为此后中国大陆通行的规范字形。</p>
+                    </li>
+                    <li>
+                        <span class="era-time">1977</span>
+                        <span class="era-title">“二简字”草案</span>
+                        <p>过度简化引发混乱，1986 年正式废止，成为汉字规范史上的一次重要教训。</p>
+                    </li>
+                    <li>
+                        <span class="era-time">1986.10</span>
+                        <span class="era-title">重新发表《简化字总表》</span>
+                        <p>对个别字作微调，确立现行简化字规范。</p>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="feature">
+                <h3>三、简化的六种主要方式</h3>
+                <p>
+                    简化不是随意造字，而是遵循“<strong>约定俗成、稳步前进</strong>”的原则，大量采用历史上已经流行的俗字、草书楷化字和古字。
+                    概括起来，主要有六种方式：
+                </p>
+
+                <div class="feature-grid">
+                    <div class="f-item">
+                        <h4>草书楷化</h4>
+                        <p>把草书中连笔简省的写法整理成楷书，如“书”“东”“车”。</p>
+                    </div>
+                    <div class="f-item">
+                        <h4>古字复用</h4>
+                        <p>启用古代已有、后来不常用的本字或异体，如“云”“礼”“众”。</p>
+                    </div>
+                    <div class="f-item">
+                        <h4>部件省略</h4>
+                        <p>省略重复或繁复部件，如“声”“医”“飞”。</p>
+                    </div>
+                    <div class="f-item">
+                        <h4>符号代替</h4>
+                        <p>用简单符号替代复杂部件，如“又”在“汉”“观”“鸡”中的用法。</p>
+                    </div>
+                    <div class="f-item">
+                        <h4>同音替代</h4>
+                        <p>借用音同或音近的简单字，如“后”代“後”、“干”代“幹”。</p>
+                    </div>
+                    <div class="f-item">
+                        <h4>偏旁类推</h4>
+                        <p>简化一个偏旁，可类推到一批字，如“讠”“钅”“纟”。</p>
+                    </div>
+                </div>
+
+                <p style="margin-top:18px;">
+                    这些方式大多有历史依据，并非凭空生造，也正因如此，简化字能在较短时间内为社会接受并稳定下来。
+                </p>
+            </div>
+        </section>
+
+        <!-- ===== 四、简繁对照 ===== -->
+        <section class="section" id="compare">
+            <div class="section-head">
+                <h2>简体与繁体：并非一一对应</h2>
+                <span>一简多繁是转换中的关键难点</span>
+            </div>
+            <p class="section-intro">
+                多数情况下，一个简体字对应一个繁体字，转换可以直接完成。但有一批简体字，对应两个甚至多个繁体字，
+                必须结合词语和语境判断。这正是本系统简繁转换模块需要特别处理的地方。
+            </p>
+
+            <div class="cmp-card">
+                <div class="cmp-row head">
+                    <div>简体</div>
+                    <div>繁体 A</div>
+                    <div>繁体 B</div>
+                </div>
+                <div class="cmp-row">
+                    <div>发</div>
+                    <div><span class="big-char">發</span> 出发、发展、发明</div>
+                    <div><span class="big-char">髮</span> 头发、理发、白发</div>
+                </div>
+                <div class="cmp-row">
+                    <div>干</div>
+                    <div><span class="big-char">乾</span> 干燥、干净（读 gān）</div>
+                    <div><span class="big-char">幹</span> 干部、干活、树干</div>
+                </div>
+                <div class="cmp-row">
+                    <div>后</div>
+                    <div><span class="big-char">後</span> 以后、后面、后来</div>
+                    <div><span class="big-char">后</span> 皇后、太后、君主之妻</div>
+                </div>
+                <div class="cmp-row">
+                    <div>里</div>
+                    <div><span class="big-char">裡</span> 里面、心里、家里</div>
+                    <div><span class="big-char">里</span> 公里、里程、乡里</div>
+                </div>
+                <div class="cmp-row">
+                    <div>面</div>
+                    <div><span class="big-char">麵</span> 面条、面粉、面包</div>
+                    <div><span class="big-char">面</span> 面孔、表面、见面</div>
+                </div>
+                <div class="cmp-row">
+                    <div>云</div>
+                    <div><span class="big-char">雲</span> 云彩、白云、云雾</div>
+                    <div><span class="big-char">云</span> 古人云、人云亦云</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== 五、两岸三地用字 ===== -->
+        <section class="section" id="region">
+            <div class="section-head">
+                <h2>两岸三地的用字差异</h2>
+                <span>不仅是简繁，还有异体与地区习惯</span>
+            </div>
+            <p class="section-intro">
+                即便同为繁体字地区，台湾、香港、澳门三地的用字也不完全一致。再叠加中国大陆的简体字，
+                就形成了今天的“两岸三地用字差异”。这种差异不仅体现在字形，也体现在词汇与用字习惯上。
+            </p>
+
+            <div class="region-card">
+                <div class="region-row head">
+                    <div>词语</div>
+                    <div>中国大陆（简体）</div>
+                    <div>台湾（繁体）</div>
+                    <div>香港（繁体）</div>
+                </div>
+                <div class="region-row">
+                    <div>里面</div>
+                    <div><span class="r-char">里</span>面</div>
+                    <div><span class="r-char">裡</span>面</div>
+                    <div><span class="r-char">裡</span>面</div>
+                </div>
+                <div class="region-row">
+                    <div>为什么</div>
+                    <div><span class="r-char">为</span>什么</div>
+                    <div><span class="r-char">為</span>什麼</div>
+                    <div><span class="r-char">為</span>甚麼</div>
+                </div>
+                <div class="region-row">
+                    <div>里面（异体）</div>
+                    <div>—</div>
+                    <div>裡</div>
+                    <div>裏</div>
+                </div>
+                <div class="region-row">
+                    <div>吃</div>
+                    <div><span class="r-char">吃</span>饭</div>
+                    <div><span class="r-char">吃</span>飯</div>
+                    <div><span class="r-char">喫</span>飯（旧）</div>
+                </div>
+                <div class="region-row">
+                    <div>今天</div>
+                    <div><span class="r-char">今</span>天</div>
+                    <div><span class="r-char">今</span>天</div>
+                    <div><span class="r-char">今</span>天</div>
+                </div>
+                <div class="region-row">
+                    <div>方便面</div>
+                    <div><span class="r-char">方</span>便面</div>
+                    <div><span class="r-char">方</span>便<span class="r-char">麵</span></div>
+                    <div><span class="r-char">即</span>食<span class="r-char">麵</span></div>
+                </div>
+            </div>
+
+            <p style="margin-top:16px; font-size:13.5px; color:var(--muted);">
+                注：表格中“吃/喫”“方便面/即食麵”等为地区用字与词汇习惯差异，并非严格的字形对应关系，仅供理解参考。
+            </p>
+        </section>
+
+        <!-- ===== 小结 ===== -->
+        <section class="summary">
+            <h3>一句话回顾</h3>
+            <p>
+                汉字从甲骨文、金文一路走来，在秦代由小篆完成第一次系统规范，经隶变、楷化定型为今文字，
+                又在 20 世纪分化为繁体与简体两套通行系统。繁体字是历代传承的正体字系统，简体字是 20 世纪汉字规范化的产物，
+                二者并非对立，而是同一文字传统在不同历史阶段与地区的展开。理解这条脉络，也就理解了本系统为什么把“简繁转换”作为核心功能之一。
+            </p>
+        </section>
+
+        <footer>
+            <div class="fz">山 溪 湖 月 波</div>
+            课程设计 · 汉字字形 Web 信息管理系统
+        </footer>
+    </main>
+</body>
+</html>

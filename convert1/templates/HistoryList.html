@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>查询历史记录 · 汉字字形演变信息管理系统</title>
+    <link rel="icon" href="data:,">
+    <style>
+        :root {
+            --ink: #1b2430;
+            --ink-soft: #46505f;
+            --muted: #7d8798;
+            --paper: #f6f2e9;
+            --paper-2: #fffdf8;
+            --line: #e5ddcc;
+            --seal: #b23a2e;
+            --seal-2: #d4783f;
+            --jade: #3f6f63;
+            --serif: "Songti SC", "STSong", "SimSun", "Noto Serif SC", serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: "PingFang SC", "Microsoft Yahei", system-ui, -apple-system, sans-serif;
+            color: var(--ink);
+            line-height: 1.75;
+            min-height: 100vh;
+            background:
+                radial-gradient(900px 420px at 8% -10%, #fff8ea 0%, rgba(255, 248, 234, 0) 62%),
+                radial-gradient(760px 420px at 94% 4%, #f1eade 0%, rgba(241, 234, 222, 0) 58%),
+                var(--paper);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { color: inherit; }
+
+        /* ============ 顶部导航 ============ */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(246, 242, 233, .85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--line);
+        }
+        .navbar-inner {
+            max-width: 1060px;
+            margin: 0 auto;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+        .seal {
+            width: 36px;
+            height: 36px;
+            flex: none;
+            border-radius: 9px;
+            display: grid;
+            place-items: center;
+            font-family: var(--serif);
+            font-size: 19px;
+            font-weight: 700;
+            color: #fff7ee;
+            background: linear-gradient(135deg, var(--seal), #c9503f);
+            box-shadow: 0 4px 12px rgba(178, 58, 46, .28);
+        }
+        .brand-text {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: .5px;
+            line-height: 1.3;
+        }
+        .brand-text em {
+            display: block;
+            font-style: normal;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            color: var(--muted);
+        }
+        .back-link {
+            font-size: 14px;
+            color: var(--ink-soft);
+            text-decoration: none;
+            padding: 7px 16px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: rgba(255, 253, 248, .75);
+            transition: border-color .2s, color .2s, box-shadow .2s, transform .2s;
+        }
+        .back-link:hover {
+            color: var(--seal);
+            border-color: #d3c7ae;
+            box-shadow: 0 8px 18px rgba(27, 36, 48, .08);
+            transform: translateY(-1px);
+        }
+
+        /* ============ 主体 ============ */
+        .shell {
+            max-width: 1060px;
+            margin: 0 auto;
+            padding: 34px 24px 72px;
+        }
+
+        .crumb {
+            font-size: 13px;
+            color: var(--muted);
+            letter-spacing: .5px;
+            margin-bottom: 12px;
+        }
+        .crumb a { text-decoration: none; transition: color .2s; }
+        .crumb a:hover { color: var(--seal); }
+        .crumb span { margin: 0 7px; color: #c9bfa9; }
+
+        .page-head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 26px;
+        }
+        .page-head h1 {
+            font-family: var(--serif);
+            font-size: 30px;
+            letter-spacing: 2px;
+            font-weight: 800;
+        }
+        .page-head h1::after {
+            content: "";
+            display: block;
+            width: 40px;
+            height: 3px;
+            margin-top: 14px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--seal), var(--seal-2));
+        }
+        .page-head p {
+            margin-top: 14px;
+            max-width: 640px;
+            font-size: 14.5px;
+            color: var(--ink-soft);
+        }
+        .count-badge {
+            flex: none;
+            display: inline-flex;
+            align-items: baseline;
+            gap: 6px;
+            padding: 8px 20px;
+            font-size: 13px;
+            color: var(--jade);
+            background: rgba(63, 111, 99, .08);
+            border: 1px solid rgba(63, 111, 99, .18);
+            border-radius: 999px;
+            letter-spacing: .5px;
+        }
+        .count-badge strong {
+            font-family: var(--serif);
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--jade);
+        }
+
+        /* ============ 表格卡片 ============ */
+        .table-card {
+            background: var(--paper-2);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            box-shadow: 0 12px 34px rgba(27, 36, 48, .07);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            padding: 15px 22px;
+            font-size: 12.5px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            color: var(--muted);
+            text-align: left;
+            background: #f4eee2;
+            border-bottom: 1px solid var(--line);
+            white-space: nowrap;
+        }
+
+        tbody td {
+            padding: 16px 22px;
+            font-size: 15px;
+            color: var(--ink);
+            border-bottom: 1px solid #f0eadd;
+            vertical-align: top;
+            word-break: break-word;
+        }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr { transition: background .18s; }
+        tbody tr:hover { background: #fdfaf3; }
+
+        /* 各列风格 */
+        td.col-input {
+            font-family: "STKaiti", "KaiTi", "楷体", serif;
+            font-size: 17px;
+            letter-spacing: 1px;
+            color: var(--seal);
+            width: 28%;
+        }
+        td.col-output {
+            color: var(--ink-soft);
+            width: 47%;
+        }
+        td.col-time {
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 13px;
+            color: var(--muted);
+            white-space: nowrap;
+            width: 25%;
+        }
+
+        /* 空状态 */
+        .empty {
+            padding: 72px 24px;
+            text-align: center;
+            color: var(--muted);
+        }
+        .empty .glyph {
+            font-family: var(--serif);
+            font-size: 44px;
+            color: #d8cfbf;
+            letter-spacing: 8px;
+            margin-bottom: 14px;
+        }
+        .empty p { font-size: 14.5px; }
+        .empty .sub { font-size: 13px; color: #a9a190; margin-top: 6px; }
+
+        /* ============ 底部操作区 ============ */
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            font: inherit;
+            font-size: 14.5px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            padding: 10px 24px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform .2s, box-shadow .25s, border-color .2s, color .2s, background .25s;
+        }
+        .btn:active { transform: translateY(1px); }
+        .btn-ghost {
+            color: var(--ink);
+            background: rgba(255, 253, 248, .9);
+            border-color: var(--line);
+        }
+        .btn-ghost:hover {
+            color: var(--seal);
+            border-color: #d3c7ae;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(27, 36, 48, .08);
+        }
+        .btn-danger {
+            color: var(--seal);
+            background: rgba(178, 58, 46, .06);
+            border-color: rgba(178, 58, 46, .28);
+        }
+        .btn-danger:hover {
+            color: #fff8f2;
+            background: linear-gradient(135deg, var(--seal), #c9513f);
+            border-color: transparent;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(178, 58, 46, .26);
+        }
+
+        .tip {
+            font-size: 12.5px;
+            color: var(--muted);
+            letter-spacing: .5px;
+        }
+
+        /* ============ 响应式 ============ */
+        @media (max-width: 720px) {
+            .shell { padding: 26px 16px 56px; }
+            .page-head h1 { font-size: 24px; }
+            thead { display: none; }
+            table, tbody, tr, td { display: block; width: 100%; }
+            tbody tr {
+                padding: 14px 18px;
+                border-bottom: 1px solid var(--line);
+            }
+            tbody tr:last-child { border-bottom: none; }
+            tbody td {
+                padding: 6px 0;
+                border-bottom: none;
+            }
+            tbody td::before {
+                content: attr(data-label);
+                display: block;
+                font-size: 11px;
+                letter-spacing: 2px;
+                color: var(--muted);
+                margin-bottom: 2px;
+            }
+            td.col-input, td.col-output, td.col-time { width: 100%; }
+            td.col-time { white-space: normal; }
+            .actions { flex-direction: column-reverse; align-items: stretch; }
+            .actions .btn { width: 100%; }
+            .tip { text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ===== 顶部导航 ===== -->
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a class="brand" href="{% url 'home' %}">
+                <span class="seal">篆</span>
+                <span class="brand-text">
+                    汉字字形演变
+                    <em>信息管理系统</em>
+                </span>
+            </a>
+            <a class="back-link" href="{% url 'home' %}">← 返回系统首页</a>
+        </div>
+    </nav>
+
+    <main class="shell">
+        <!-- 面包屑 -->
+        <div class="crumb">
+            <a href="{% url 'home' %}">首页</a><span>/</span>查询历史记录
+        </div>
+
+        <!-- 页面标题 -->
+        <header class="page-head">
+            <div>
+                <h1>查询历史记录</h1>
+                <p>系统自动保存每一次简繁转换与小篆查询记录，按时间倒序排列，方便回溯过往的查询内容。</p>
+            </div>
+            <span class="count-badge">共 <strong>{{ datas|length }}</strong> 条记录</span>
+        </header>
+
+        <!-- 表格卡片 -->
+        <section class="table-card">
+            {% if datas %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>输入内容</th>
+                        <th>输出结果</th>
+                        <th>查询时间</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in datas %}
+                    <tr>
+                        <td class="col-input" data-label="输入内容">{{ data.input }}</td>
+                        <td class="col-output" data-label="输出结果">{{ data.output }}</td>
+                        <td class="col-time" data-label="查询时间">{{ data.create_time }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty">
+                <div class="glyph">鼎 書 雲</div>
+                <p>暂无历史记录</p>
+                <p class="sub">前往「简繁双向转换」或「小篆字形生成」完成一次查询，记录会自动出现在这里。</p>
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- 底部操作区 -->
+        <div class="actions">
+            <span class="tip">清空操作不可撤销，请谨慎执行。</span>
+            <form action="/convert1/delete" method="post" style="margin:0;">
+                {% csrf_token %}
+                <input class="btn btn-danger" type="submit" value="清空全部历史" onclick="return confirm('确定清空所有记录？')">
+            </form>
+        </div>
+
+        <footer style="margin-top:56px;padding-top:26px;border-top:1px solid var(--line);text-align:center;font-size:13px;color:var(--muted);letter-spacing:1px;">
+            <div style="font-family:var(--serif);color:var(--ink-soft);letter-spacing:8px;margin-bottom:6px;">鼎 書 雲 馬 樂</div>
+            课程设计 · 汉字字形演变 Web 信息管理系统
+        </footer>
+    </main>
+</body>
+</html>
